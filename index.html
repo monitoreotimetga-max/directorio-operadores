@@ -3,29 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Directorio de Operadores</title>
+  <title>Directorio METGA Ops</title>
   
-  <!-- Configuración PWA / Modo Offline -->
+  <!-- PWA y Iconos METGA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3061/3061341.png">
+  <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="icon" type="image/png" href="./logo.png">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 antialiased">
 
-  <!-- Encabezado fijo -->
+  <!-- Encabezado fijo con LOGO METGA -->
   <header class="bg-slate-900 text-white p-4 sticky top-0 z-10 shadow-md">
     <div class="max-w-md mx-auto flex justify-between items-center">
-      <div>
-        <h1 class="font-bold text-lg leading-tight">📇 Directorio Ops</h1>
-        <p class="text-xs text-slate-400">Contactos de flota en tiempo real</p>
+      <div class="flex items-center gap-3">
+        <!-- Logo METGA -->
+        <img src="./logo.png" alt="METGA Logo" class="h-9 w-auto object-contain rounded bg-white/10 p-1">
+        <div>
+          <h1 class="font-bold text-base leading-tight">Directorio Ops</h1>
+          <p class="text-[11px] text-slate-400">Flota METGA en tiempo real</p>
+        </div>
       </div>
       <button onclick="cargarDatos()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700 active:scale-95 transition">
-        🔄 Actualizar
+        🔄
       </button>
     </div>
   </header>
@@ -48,7 +53,7 @@
     <div id="listaOperadores" class="space-y-3">
       <div class="bg-white p-6 rounded-xl text-center shadow-sm border border-slate-200">
         <div class="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-blue-600 rounded-full mb-2"></div>
-        <p class="text-sm text-slate-500">Cargando lista desde Agenda_Ops...</p>
+        <p class="text-sm text-slate-500">Cargando lista desde Agenda...</p>
       </div>
     </div>
   </main>
@@ -58,12 +63,12 @@
 
     let operadores = [];
 
-    // Registrar el Service Worker para habilitar el uso offline
+    // Registrar el Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(() => console.log('Service Worker registrado con éxito'))
-          .catch(err => console.error('Error registrando SW:', err));
+          .then(() => console.log('Service Worker registrado'))
+          .catch(err => console.error('Error SW:', err));
       });
     }
 
@@ -79,7 +84,7 @@
         contador.innerText = `${operadores.length} registro(s) encontrados`;
         
         if (!navigator.onLine) {
-          status.innerText = "⚡ Modo Sin Conexión (Caché)";
+          status.innerText = "⚡ Modo Sin Conexión";
           status.className = "text-amber-600 font-medium";
         } else {
           status.innerText = "● Conectado";
@@ -88,7 +93,6 @@
 
         renderizar(operadores);
       } catch (err) {
-        // Intentar leer datos guardados si falla la conexión
         if (operadores.length === 0) {
           contenedor.innerHTML = `
             <div class="bg-amber-50 p-4 rounded-xl text-center border border-amber-200 text-amber-700 text-sm">
