@@ -4,7 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Directorio de Operadores</title>
-  <!-- Tailwind CSS para el diseño visual -->
+  
+  <!-- Configuración PWA / Modo Offline -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3061/3061341.png">
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 antialiased">
@@ -33,12 +41,11 @@
     <!-- Contador de registros y estado -->
     <div class="flex justify-between items-center mb-3 text-xs text-slate-500 px-1">
       <span id="contador">Cargando...</span>
-      <span id="status" class="text-emerald-600 font-medium">● Conectado a Sheets</span>
+      <span id="status" class="text-emerald-600 font-medium">● Conectado</span>
     </div>
 
     <!-- Contenedor dinámico de lista -->
     <div id="listaOperadores" class="space-y-3">
-      <!-- Indicador de Carga Inicial -->
       <div class="bg-white p-6 rounded-xl text-center shadow-sm border border-slate-200">
         <div class="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-blue-600 rounded-full mb-2"></div>
         <p class="text-sm text-slate-500">Cargando lista desde Agenda_Ops...</p>
@@ -47,26 +54,47 @@
   </main>
 
   <script>
-    // URL de tu implementación de Google Apps Script ya integrada
     const API_URL = "https://script.google.com/macros/s/AKfycbxuD12ZCqRoQwPi4i3PWMIETov01XZVYa52Z1syKbug6QSfwpvr2KpL2r4a6I-QJ18/exec"; 
 
     let operadores = [];
 
+    // Registrar el Service Worker para habilitar el uso offline
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker registrado con éxito'))
+          .catch(err => console.error('Error registrando SW:', err));
+      });
+    }
+
     async function cargarDatos() {
       const contenedor = document.getElementById('listaOperadores');
       const contador = document.getElementById('contador');
+      const status = document.getElementById('status');
       
       try {
         const res = await fetch(API_URL);
         operadores = await res.json();
         
         contador.innerText = `${operadores.length} registro(s) encontrados`;
+        
+        if (!navigator.onLine) {
+          status.innerText = "⚡ Modo Sin Conexión (Caché)";
+          status.className = "text-amber-600 font-medium";
+        } else {
+          status.innerText = "● Conectado";
+          status.className = "text-emerald-600 font-medium";
+        }
+
         renderizar(operadores);
       } catch (err) {
-        contenedor.innerHTML = `
-          <div class="bg-red-50 p-4 rounded-xl text-center border border-red-200 text-red-600 text-sm">
-            ❌ Error al conectar con Google Sheets. Verifica la conexión a internet.
-          </div>`;
+        // Intentar leer datos guardados si falla la conexión
+        if (operadores.length === 0) {
+          contenedor.innerHTML = `
+            <div class="bg-amber-50 p-4 rounded-xl text-center border border-amber-200 text-amber-700 text-sm">
+              ⚠️ Sin conexión a internet. Abre la app al menos una vez con datos para guardar la lista localmente.
+            </div>`;
+        }
       }
     }
 
@@ -85,12 +113,11 @@
       lista.forEach(op => {
         const tieneTel = op.telefono && op.telefono.length >= 10;
         
-        // Agregar clave de país +52 para WhatsApp si el número viene de 10 dígitos
         let telWA = op.telefono;
         if (telWA && telWA.length === 10) telWA = '52' + telWA;
 
         contenedor.innerHTML += `
-          <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center hover:border-slate-300 transition">
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
             <div class="pr-2 min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <span class="bg-blue-100 text-blue-800 text-[11px] font-bold px-2 py-0.5 rounded-md border border-blue-200">
@@ -132,7 +159,6 @@
       renderizar(filtrados);
     }
 
-    // Carga automática al abrir
     cargarDatos();
   </script>
 </body>
