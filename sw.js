@@ -1,4 +1,4 @@
-const CACHE_NAME = 'directorio-ops-v3';
+const CACHE_NAME = 'directorio-ops-v4';
 const ASSETS = [
   './',
   './index.html',
