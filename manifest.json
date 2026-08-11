@@ -1,6 +1,6 @@
 {
-  "name": "Directorio de Operadores",
-  "short_name": "Directorio Ops",
+  "name": "Directorio METGA Ops",
+  "short_name": "METGA Ops",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3061/3061341.png",
+      "src": "./logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
