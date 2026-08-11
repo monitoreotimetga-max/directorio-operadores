@@ -1,53 +1,52 @@
-const CACHE_NAME = 'directorio-ops-v1';
+const CACHE_NAME = 'directorio-ops-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  'https://cdn.tailwindcss.com'
+  './logo.png'
 ];
 
-// Instalación: guardar archivos básicos en caché
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
+// Instalación: Guarda los archivos base en la memoria del celular
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
     })
   );
   self.skipWaiting();
 });
 
-// Activación
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+// Activación: Borra cachés antiguas
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
-// Interceptación de peticiones de red
-self.addEventListener('fetch', event => {
-  const requestUrl = event.request.url;
-
-  // Si la petición es a Google Apps Script (datos de la agenda)
-  if (requestUrl.includes('script.google.com')) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Si hay internet, guarda la respuesta fresca en caché y la entrega
-          const responseClone = response.clone();
-          caches.open('agenda-data-cache').then(cache => {
-            cache.put(event.request, responseClone);
+// Peticiones: Busca en internet y actualiza la caché local; si falla la red, usa la caché
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    fetch(e.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseClone);
           });
-          return response;
-        })
-        .catch(() => {
-          // Si NO hay internet (fail fetch), entrega la última copia guardada
-          return caches.match(event.request);
-        })
-    );
-  } else {
-    // Para archivos estáticos (HTML/CSS)
-    event.respondWith(
-      caches.match(event.request).then(response => {
-        return response || fetch(event.request);
+        }
+        return networkResponse;
       })
-    );
-  }
+      .catch(() => {
+        return caches.match(e.request);
+      })
+  );
 });
