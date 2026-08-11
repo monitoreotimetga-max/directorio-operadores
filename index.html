@@ -71,7 +71,7 @@
     </header>
 
     <main class="max-w-md mx-auto p-4 pb-12">
-      <!-- BANNER DE INSTALACIÓN PWA (Inicia Oculto) -->
+      <!-- BANNER DE INSTALACIÓN PWA -->
       <div id="installBanner" class="hidden mb-4 bg-gradient-to-r from-blue-900 to-slate-900 text-white p-4 rounded-2xl shadow-lg border border-blue-700 flex justify-between items-center animate-bounce">
         <div class="pr-2">
           <p class="font-bold text-xs">📱 ¡Instala la App en tu celular!</p>
@@ -106,9 +106,9 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbxuD12ZCqRoQwPi4i3PWMIETov01XZVYa52Z1syKbug6QSfwpvr2KpL2r4a6I-QJ18/exec"; 
 
     let operadores = [];
-    let deferredPrompt = null; // Variable para guardar el evento de instalación
+    let deferredPrompt = null;
 
-    // Capturar el evento de instalación nativo
+    // Capturar evento de instalación del navegador
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -163,7 +163,6 @@
       document.getElementById("appScreen").classList.remove("hidden");
       document.getElementById("userGreeting").innerText = `Hola, ${nombreUsuario}`;
       
-      // Mostrar el banner de instalación solo si el navegador capturó la posibilidad de instalar
       if (deferredPrompt) {
         document.getElementById("installBanner").classList.remove("hidden");
       }
@@ -194,25 +193,33 @@
       const status = document.getElementById('status');
       
       try {
+        // Intenta obtener datos frescos de la red
         const res = await fetch(API_URL);
         operadores = await res.json();
         
+        // Guarda respaldo en el almacenamiento local del teléfono
+        localStorage.setItem("metga_operadores_cache", JSON.stringify(operadores));
+
+        status.innerText = "● Conectado";
+        status.className = "text-emerald-600 font-medium";
         contador.innerText = `${operadores.length} registro(s) encontrados`;
         
-        if (!navigator.onLine) {
+        renderizar(operadores);
+
+      } catch (err) {
+        // Si falla la red (sin señal/datos), carga la copia guardada
+        const cachedData = localStorage.getItem("metga_operadores_cache");
+
+        if (cachedData) {
+          operadores = JSON.parse(cachedData);
           status.innerText = "⚡ Modo Sin Conexión";
           status.className = "text-amber-600 font-medium";
+          contador.innerText = `${operadores.length} registro(s) (Copia Offline)`;
+          renderizar(operadores);
         } else {
-          status.innerText = "● Conectado";
-          status.className = "text-emerald-600 font-medium";
-        }
-
-        renderizar(operadores);
-      } catch (err) {
-        if (operadores.length === 0) {
           contenedor.innerHTML = `
             <div class="bg-amber-50 p-4 rounded-xl text-center border border-amber-200 text-amber-700 text-sm">
-              ⚠️ Sin conexión a internet para refrescar la lista.
+              ⚠️ No hay datos guardados. Abre la app con internet al menos una vez para sincronizar.
             </div>`;
         }
       }
